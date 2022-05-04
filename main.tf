@@ -10,7 +10,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-west-2"
+  region = "us-east-1"
 }
 
 module "vpc" {
@@ -29,6 +29,15 @@ module "vpc" {
   tags = var.vpc_tags
 }
 
+data "aws_ami" "amazon_linux" {
+  owners      = ["amazon"]
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-ebs"]
+  }
+}
 module "ec2_instances" {
   source  = "terraform-aws-modules/ec2-instance/aws"
   version = "2.12.0"
@@ -36,7 +45,7 @@ module "ec2_instances" {
   name           = "my-ec2-cluster"
   instance_count = 2
 
-  ami                    = "ami-0c5204531f799e0c6"
+  ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t2.micro"
   vpc_security_group_ids = [module.vpc.default_security_group_id]
   subnet_id              = module.vpc.public_subnets[0]
@@ -46,11 +55,13 @@ module "ec2_instances" {
     Environment = "dev"
   }
 }
-
+resource "random_pet" "bucket_name" {
+  prefix = "bucket_website"  
+}
 module "website_s3_bucket" {
   source = "./modules/aws-s3-static-website-bucket"
 
-  bucket_name = "robin-test-dec-17-2019"
+  bucket_name = "website-bucket-aweruo23497jljvasdf"
 
   tags = {
     Terraform   = "true"
